@@ -1,0 +1,13 @@
+AWS Lambda is a serverless compute service that lets you run code without managing servers.
+
+A Lambda function is triggered by an event. Common triggers include API Gateway, S3, EventBridge, and SQS.
+
+AWS Lambda automatically scales based on incoming requests. You are charged based on compute time and the number of requests.
+
+Amazon Bedrock is a managed service that provides access to foundation models through APIs.
+
+Retrieval-Augmented Generation, or RAG, combines information retrieval with text generation. A RAG system retrieves relevant documents and provides them as context to an LLM before generating an answer.
+
+A typical RAG pipeline contains document ingestion, chunking, embedding generation, vector storage, retrieval, and answer generation.
+
+ChromaDB is a vector database that can store embeddings and perform similarity search over documents.

@@ -1,0 +1,109 @@
+import base64
+
+from fastapi import FastAPI, File, UploadFile
+from pydantic import BaseModel
+
+from app.services.dad import ask_dad
+from app.services.voice import generate_speech, transcribe_audio
+from app.services.rag import retrieve
+from app.services.web import search_web
+
+
+app = FastAPI(title="Dad Mode API")
+
+
+class ChatRequest(BaseModel):
+    message: str
+
+
+class ChatResponse(BaseModel):
+    response: str
+
+
+class VoiceResponse(BaseModel):
+    transcript: str
+    response: str
+    audio_base64: str
+
+class RAGRequest(BaseModel):
+    message: str
+
+class WebSearchRequest(BaseModel):
+    message: str
+
+
+@app.get("/")
+def root():
+    return {"message": "Dad Mode API is running"}
+
+
+@app.post("/chat", response_model=ChatResponse)
+def chat(request: ChatRequest):
+    response = ask_dad(request.message)
+
+    return ChatResponse(response=response)
+
+
+@app.post("/voice", response_model=VoiceResponse)
+async def voice(file: UploadFile = File(...)):
+    audio_bytes = await file.read()
+
+    transcript = transcribe_audio(
+        audio_bytes,
+        file.filename or "recording.wav"
+    )
+
+    response = ask_dad(transcript)
+
+    audio_base64 = generate_speech(response)
+
+    return VoiceResponse(
+        transcript=transcript,
+        response=response,
+        audio_base64=audio_base64,
+    )
+
+
+@app.post("/rag-chat", response_model=ChatResponse)
+def rag_chat(request: RAGRequest):
+
+    results = retrieve(
+        request.message,
+        n_results=3,
+    )
+
+    context_parts = []
+
+    for result in results:
+        context_parts.append(
+            f"Source: {result['source']}\n"
+            f"{result['document']}"
+        )
+
+    context = "\n\n---\n\n".join(context_parts)
+
+    response = ask_dad(
+        request.message,
+        context=context,
+    )
+
+    sources = list(
+        dict.fromkeys(
+            result["source"]
+            for result in results
+        )
+    )
+
+    return {
+        "response": response,
+        "sources": sources,
+    }
+
+@app.post("/web-search")
+def web_search(request: WebSearchRequest):
+    result = search_web(request.message)
+
+    return {
+        "response": result["answer"],
+        "sources": result["sources"],
+    }

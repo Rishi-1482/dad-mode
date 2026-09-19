@@ -2,3 +2,10 @@ openai
 sounddevice
 soundfile
 python-dotenv
+fastapi
+uvicorn
+streamlit
+requests
+python-multipart
+chromadb
+pypdf

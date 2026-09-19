@@ -7,13 +7,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-OPENAPI_API_KEY = os.getenv("OPENAPI_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 SAMPLE_RATE = 160000
 MAX_DURATION = 30
 SAMPLES = SAMPLE_RATE * MAX_DURATION
 
-client = openai.OpenAI(api_key=OPENAPI_API_KEY)
+client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
 def record_audio():
 
@@ -51,7 +51,7 @@ def speak(text):
     with client.audio.speech.with_streaming_response.create(
         model="tts-1",
         input=text,
-        voice='alloy',
+        voice='onyx',
     ) as response:
         response.stream_to_file("response.mp3")
     data, sr = sf.read("response.mp3") # sr is sample rate
