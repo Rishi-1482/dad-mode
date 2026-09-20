@@ -1,0 +1,27 @@
+import os
+
+from dotenv import load_dotenv
+from openai import OpenAI
+
+load_dotenv()
+
+API_KEY = os.getenv("OPENAPI_API_KEY")
+
+if not API_KEY:
+    raise ValueError("OPENAPI_API_KEY is not set in .env")
+
+client = OpenAI(api_key=API_KEY)
+
+
+def ask_dad(text: str) -> str:
+    response = client.responses.create(
+        model="gpt-4o-mini",
+        instructions=(
+            "You are Dad Mode, a serious and slightly rude AI dad. "
+            "Be funny, direct, practical, and occasionally disappointed. "
+            "Do not be abusive or hateful."
+        ),
+        input=text,
+    )
+
+    return response.output_text

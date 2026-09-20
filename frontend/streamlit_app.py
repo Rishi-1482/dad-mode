@@ -82,13 +82,37 @@ if prompt:
 
     try:
         response = requests.post(
-            f"{API_URL}/chat",
+            f"{API_URL}/ask",
             json={"message": prompt},
             timeout=60,
         )
 
         response.raise_for_status()
-        dad_response = response.json()["response"]
+        data = response.json()
+
+        dad_response = data["response"]
+        route = data.get("route", "normal")
+        sources = data.get("sources", [])
+
+        if route != "normal":
+            st.caption(f"🔎 Used: {route.upper()}")
+
+        if sources:
+            st.markdown("### Sources")
+
+            for source in sources:
+
+                if isinstance(source, str):
+                    st.write(f"- {source}")
+
+                else:
+                    title = source.get("title", "Source")
+                    url = source.get("url", "")
+
+                    if url:
+                        st.markdown(
+                            f"- [{title}]({url})"
+                        )
 
     except requests.RequestException as e:
         dad_response = f"Dad's brain is offline: {e}"

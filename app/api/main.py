@@ -7,6 +7,7 @@ from app.services.dad import ask_dad
 from app.services.voice import generate_speech, transcribe_audio
 from app.services.rag import retrieve
 from app.services.web import search_web
+from app.services.assistant import answer_question
 
 
 app = FastAPI(title="Dad Mode API")
@@ -31,6 +32,8 @@ class RAGRequest(BaseModel):
 class WebSearchRequest(BaseModel):
     message: str
 
+class AskRequest(BaseModel):
+    message: str
 
 @app.get("/")
 def root():
@@ -107,3 +110,10 @@ def web_search(request: WebSearchRequest):
         "response": result["answer"],
         "sources": result["sources"],
     }
+
+@app.post("/ask")
+def ask(request: AskRequest):
+
+    result = answer_question(request.message)
+
+    return result
