@@ -20,8 +20,8 @@ collection = chroma_client.get_or_create_collection(
 
 def chunk_text(
     text: str,
-    chunk_size: int = 1200,
-    overlap: int = 200,
+    chunk_size: int = 220,
+    overlap: int = 30,
 ) -> list[str]:
     """
     Split text into overlapping character chunks.
@@ -143,7 +143,7 @@ def ingest_directory(directory: str = "knowledge") -> int:
 
 def retrieve(
     query: str,
-    n_results: int = 3,
+    n_results: int = 2,
 ) -> list[dict]:
     """
     Retrieve the most relevant chunks for a query.

@@ -94,8 +94,24 @@ if prompt:
         route = data.get("route", "normal")
         sources = data.get("sources", [])
 
-        if route != "normal":
-            st.caption(f"🔎 Used: {route.upper()}")
+        tool_calls = data.get("tool_calls", [])
+
+        if route == "rag":
+            st.caption("📚 Dad used your knowledge base")
+
+        elif route == "web":
+            st.caption("🌐 Dad searched the web")
+
+        elif route == "hybrid":
+            st.caption("🧠 Dad used your knowledge base + web")
+
+        elif route == "normal":
+            st.caption("💬 Dad answered directly")
+        
+        if tool_calls:
+            st.caption(
+                "Tools: " + ", ".join(tool_calls)
+            )
 
         if sources:
             st.markdown("### Sources")
