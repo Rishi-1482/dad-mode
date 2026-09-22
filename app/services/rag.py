@@ -104,7 +104,7 @@ def ingest_document(file_path: str) -> int:
         for index in range(len(chunks))
     ]
 
-    collection.add(
+    collection.upsert(
         ids=ids,
         embeddings=embeddings,
         documents=chunks,
@@ -183,3 +183,13 @@ def retrieve(
         )
 
     return retrieved
+
+
+def ensure_knowledge_base():
+    """
+    Populate ChromaDB if it is empty.
+    Useful for fresh deployments.
+    """
+    if collection.count() == 0:
+        print("Knowledge base is empty. Ingesting documents...")
+        ingest_directory("knowledge")

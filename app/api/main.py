@@ -1,6 +1,9 @@
 import base64
+import os
 
-from fastapi import FastAPI, File, UploadFile
+from fastapi import Header, HTTPException
+
+from fastapi import FastAPI, File, UploadFile, Depends
 from pydantic import BaseModel
 
 from app.services.dad import ask_dad
@@ -8,9 +11,30 @@ from app.services.voice import generate_speech, transcribe_audio
 from app.services.rag import retrieve
 from app.services.web import search_web
 from app.services.assistant import answer_question
+from contextlib import asynccontextmanager
+
+from app.services.rag import ensure_knowledge_base
 
 
-app = FastAPI(title="Dad Mode API")
+APP_API_TOKEN = os.getenv("APP_API_TOKEN")
+
+def verify_api_token(x_app_token: str | None = Header(default=None)):
+    if not APP_API_TOKEN:
+        raise HTTPException(status_code=500, detail="API token not configured")
+    
+    if x_app_token != APP_API_TOKEN:
+        raise HTTPException(status_code=401, detail="Invalid API token")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Initialize ChromaDB and ingest documents.
+    """
+    ensure_knowledge_base()
+    yield
+
+app = FastAPI(title="Dad Mode API", lifespan=lifespan)
 
 
 class ChatRequest(BaseModel):
@@ -47,7 +71,7 @@ def chat(request: ChatRequest):
     return ChatResponse(response=response)
 
 
-@app.post("/voice", response_model=VoiceResponse)
+@app.post("/voice", dependencies=[Depends(verify_api_token)])
 async def voice(file: UploadFile = File(...)):
     audio_bytes = await file.read()
 
@@ -56,8 +80,10 @@ async def voice(file: UploadFile = File(...)):
         file.filename or "recording.wav"
     )
 
-    response = ask_dad(transcript)
+    result = answer_question(transcript)
 
+    response = result["response"]
+    
     audio_base64 = generate_speech(response)
 
     return VoiceResponse(
@@ -111,7 +137,7 @@ def web_search(request: WebSearchRequest):
         "sources": result["sources"],
     }
 
-@app.post("/ask")
+@app.post("/ask", dependencies=[Depends(verify_api_token)])
 def ask(request: AskRequest):
 
     result = answer_question(request.message)
