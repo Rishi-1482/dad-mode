@@ -1,3 +1,4 @@
 .env
 __pycache__/
 knowledge/malicious.txt
+chroma_db/

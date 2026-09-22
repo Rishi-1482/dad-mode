@@ -4,9 +4,29 @@ import hashlib
 
 import requests
 import streamlit as st
+import os
 
 
-API_URL = "http://127.0.0.1:8000"
+def get_config(name, default=None):
+    try:
+        return st.secrets[name]
+    except Exception:
+        return os.getenv(name, default)
+
+
+API_URL = get_config(
+    "API_URL",
+    "http://127.0.0.1:8000",
+)
+
+BACKEND_API_TOKEN = get_config(
+    "BACKEND_API_TOKEN",
+    "",
+)
+
+HEADERS = {
+    "X-App-Token": BACKEND_API_TOKEN,
+}
 
 
 st.set_page_config(
@@ -84,6 +104,7 @@ if prompt:
         response = requests.post(
             f"{API_URL}/ask",
             json={"message": prompt},
+            headers=HEADERS,
             timeout=60,
         )
 
@@ -181,6 +202,7 @@ if audio_value is not None:
                             "audio/wav",
                         )
                     },
+                    headers=HEADERS,
                     timeout=120,
                 )
 
