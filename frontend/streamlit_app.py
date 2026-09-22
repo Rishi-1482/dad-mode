@@ -25,7 +25,7 @@ BACKEND_API_TOKEN = get_config(
 )
 
 HEADERS = {
-    "X-App-Token": BACKEND_API_TOKEN,
+    "x-app-token": BACKEND_API_TOKEN,
 }
 
 
