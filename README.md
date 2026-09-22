@@ -1,34 +1,46 @@
-# Local Agent AI Voice Assistant
+# Dad Mode AI Assistant
 
-Talk to your computer. It talks back. Like your dad, but somehow *worse*.
+An AI assistant that answers text and voice questions with practical advice, RAG-powered knowledge, web search, and just enough disappointed-dad energy.
 
-Hit Enter → ramble into the mic → hit Enter again → Whisper hears you, GPT-4o-mini judges you, and TTS says it out loud with zero mercy.
+## Live app
 
-## Setup
+[Open Dad Mode](https://rishi-1482-dad-mode-frontendstreamlit-app-mdotaw.streamlit.app/)
+
+Go ahead. Ask the question you could have Googled yourself.
+
+## Features
+
+- Text and voice conversations
+- Speech-to-text and text-to-speech
+- RAG with ChromaDB
+- Web search with Tavily
+- FastAPI backend and Streamlit frontend
+- Input guardrails and API token protection
+
+## Local setup
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Add your OpenAI key to a `.env`:
+Create a `.env` file:
 
-```
-OPENAPI_API_KEY=sk-your-key-here
+```env
+OPENAI_API_KEY=your-openai-key
+TAVILY_API_KEY=your-tavily-key
+APP_API_TOKEN=your-private-token
 ```
 
-## Run
+Run the backend:
 
 ```bash
-python main.py
+uvicorn app.api.main:app --reload
 ```
 
-Then speak. Try not to take the feedback personally. (You will.)
+Run the frontend:
 
-## Pipeline
+```bash
+streamlit run frontend/streamlit_app.py
+```
 
-1. **Record** — your mic, your problems  
-2. **Transcribe** — Whisper-1  
-3. **Think** — GPT-4o-mini in "serious rude dad" mode  
-4. **Speak** — TTS-1 (`alloy`) reads you the lecture  
-
-No UI. No fluff. Just you, a microphone, and an AI dad who never asked for this either.
+That is it. Even Dad thinks you can handle this part.
