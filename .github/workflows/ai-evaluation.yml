@@ -41,16 +41,16 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          pytest tests.test_guardrails
+          python -m pytest tests/test_guardrails.py
 
       - name: Run DeepEval RAG tests
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          deepeval test run evals.test_rag
+          deepeval test run evals/test_rag.py
 
       - name: Run DeepEval agent tests
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          deepeval test run evals.test_agent
+          deepeval test run evals/test_agent.py
