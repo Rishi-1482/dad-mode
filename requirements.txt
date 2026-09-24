@@ -11,3 +11,5 @@ chromadb
 pypdf
 deepeval
 tavily-python
+plotly
+pandas

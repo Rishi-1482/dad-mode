@@ -5,6 +5,23 @@ import hashlib
 import requests
 import streamlit as st
 import os
+from dotenv import load_dotenv
+
+import uuid
+
+load_dotenv()
+
+if st.sidebar.button("🆕 New Conversation"):
+
+    st.session_state.messages = []
+
+    st.session_state.conversation_id = str(
+        uuid.uuid4()
+    )
+
+    st.session_state.processed_audio = None
+
+    st.rerun()
 
 
 def get_config(name, default=None):
@@ -21,7 +38,7 @@ API_URL = get_config(
 
 BACKEND_API_TOKEN = get_config(
     "BACKEND_API_TOKEN",
-    "",
+    get_config("APP_API_TOKEN", ""),
 )
 
 HEADERS = {
@@ -50,6 +67,11 @@ if "processed_audio" not in st.session_state:
 
 if "autoplay_audio" not in st.session_state:
     st.session_state.autoplay_audio = None
+
+if "conversation_id" not in st.session_state:
+    st.session_state.conversation_id = str(
+        uuid.uuid4()
+    )
 
 
 # -----------------------------
@@ -103,7 +125,7 @@ if prompt:
     try:
         response = requests.post(
             f"{API_URL}/ask",
-            json={"message": prompt},
+            json={"message": prompt, "conversation_id": st.session_state.conversation_id},
             headers=HEADERS,
             timeout=60,
         )
@@ -176,6 +198,7 @@ st.subheader("🎤 Talk to Dad")
 audio_value = st.audio_input(
     "Record a voice message",
     sample_rate=16000,
+    key=f"audio_input_{st.session_state.conversation_id}",
 )
 
 
@@ -202,6 +225,7 @@ if audio_value is not None:
                             "audio/wav",
                         )
                     },
+                    # data={"conversation_id": st.session_state.conversation_id},
                     headers=HEADERS,
                     timeout=120,
                 )

@@ -3,7 +3,7 @@ import os
 
 from fastapi import Header, HTTPException
 
-from fastapi import FastAPI, File, UploadFile, Depends
+from fastapi import FastAPI, File, UploadFile, Depends, Form, Header
 from pydantic import BaseModel
 
 from app.services.dad import ask_dad
@@ -14,6 +14,7 @@ from app.services.assistant import answer_question
 from contextlib import asynccontextmanager
 
 from app.services.rag import ensure_knowledge_base
+
 
 
 APP_API_TOKEN = os.getenv("APP_API_TOKEN")
@@ -58,7 +59,7 @@ class WebSearchRequest(BaseModel):
 
 class AskRequest(BaseModel):
     message: str
-
+    conversation_id: str = "default"
 @app.get("/")
 def root():
     return {"message": "Dad Mode API is running"}
@@ -72,7 +73,7 @@ def chat(request: ChatRequest):
 
 
 @app.post("/voice", dependencies=[Depends(verify_api_token)])
-async def voice(file: UploadFile = File(...)):
+async def voice(file: UploadFile = File(...), conversation_id: str = Form("default")):
     audio_bytes = await file.read()
 
     transcript = transcribe_audio(
@@ -80,10 +81,10 @@ async def voice(file: UploadFile = File(...)):
         file.filename or "recording.wav"
     )
 
-    result = answer_question(transcript)
+    result = answer_question(transcript, conversation_id=conversation_id)
 
     response = result["response"]
-    
+
     audio_base64 = generate_speech(response)
 
     return VoiceResponse(
@@ -140,6 +141,6 @@ def web_search(request: WebSearchRequest):
 @app.post("/ask", dependencies=[Depends(verify_api_token)])
 def ask(request: AskRequest):
 
-    result = answer_question(request.message)
+    result = answer_question(request.message, conversation_id= request.conversation_id)
 
     return result

@@ -4,6 +4,15 @@ from app.services.dad import client
 from app.services.guardrails import validate_input, validate_output
 from app.services.rag import retrieve
 from app.services.web import search_web
+from app.services.memory import (
+    get_memories,
+    get_recent_messages,
+    save_message,
+
+)
+from app.services.memory_extractor import extract_memories
+from app.services.observability import log_request
+import time
 
 
 AGENT_MODEL = "gpt-4o-mini"
@@ -154,10 +163,11 @@ def _run_tool(
     )
 
 
-def run_agent(question: str, include_debug: bool = False) -> dict:
+def run_agent(question: str, conversation_id: str = "default", include_debug: bool = False) -> dict:
     """
     Run the tool-calling Dad Mode agent.
     """
+    start_time = time.perf_counter()
 
     safety = validate_input(question)
 
@@ -172,8 +182,29 @@ def run_agent(question: str, include_debug: bool = False) -> dict:
             "sources": [],
             "tool_calls": [],
         }
+    history = get_recent_messages(
+    conversation_id,
+    limit=8,
+    )
+    memories = get_memories(limit=20)
 
-    input_items = [
+    memory_context = ""
+
+    if memories:
+
+        memory_lines = []
+
+        for memory in memories:
+            memory_lines.append(
+                f"- {memory['key']}: {memory['value']}"
+            )
+
+        memory_context = (
+            "\n\nLONG-TERM MEMORY:\n"
+            + "\n".join(memory_lines)
+        )
+
+    input_items = history + [
         {
             "role": "user",
             "content": question,
@@ -184,12 +215,19 @@ def run_agent(question: str, include_debug: bool = False) -> dict:
     all_sources = []
     debug_context_parts = []
 
+
+    agent_instructions = (
+        SYSTEM_PROMPT
+        + "\n\n"
+        + memory_context
+        )
+
     # Allow a few tool-call rounds.
     for _ in range(4):
 
         response = client.responses.create(
             model=AGENT_MODEL,
-            instructions=SYSTEM_PROMPT,
+            instructions=agent_instructions,
             input=input_items,
             tools=TOOLS,
             tool_choice="auto",
@@ -243,6 +281,22 @@ def run_agent(question: str, include_debug: bool = False) -> dict:
             else:
                 route = "hybrid"
 
+            save_message(
+                conversation_id,
+                "user",
+                question,
+            )
+
+            save_message(
+                conversation_id,
+                "assistant",
+                answer,
+            )
+            extract_memories(
+                question,
+                answer,
+            )
+
             result = {
                 "response": answer,
                 "route": route,
@@ -254,6 +308,19 @@ def run_agent(question: str, include_debug: bool = False) -> dict:
                 result["debug_context"] = "\n\n---\n\n".join(
                     debug_context_parts
                 )
+
+            latency_ms = (
+                time.perf_counter() - start_time
+            ) * 1000
+
+            log_request(
+                conversation_id,
+                route,
+                tool_calls_used,
+                latency_ms,
+                True,
+                AGENT_MODEL,
+            )
 
             return result
 
@@ -312,6 +379,7 @@ def run_agent(question: str, include_debug: bool = False) -> dict:
                     ),
                 }
             )
+    
 
     result = {
         "response": (
@@ -327,5 +395,12 @@ def run_agent(question: str, include_debug: bool = False) -> dict:
         result["debug_context"] = "\n\n---\n\n".join(
             debug_context_parts
         )
+
+    latency_ms = (
+        time.perf_counter() - start_time
+    ) * 1000
+
+    result["latency_ms"] = round(latency_ms, 2)
+    result["model"] = AGENT_MODEL
 
     return result
