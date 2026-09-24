@@ -5,10 +5,7 @@ def answer_question(
     question: str,
     include_debug: bool = False,
 ) -> dict:
-
-    result = run_agent(question)
-
-    if include_debug:
-        result["debug_context"] = ""
-
-    return result
+    return run_agent(
+        question,
+        include_debug=include_debug,
+    )

@@ -5,16 +5,20 @@ from tavily import TavilyClient
 
 load_dotenv()
 
-TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 
-if not TAVILY_API_KEY:
-    raise ValueError("TAVILY_API_KEY is not set in .env")
+def get_tavily_client():
+    api_key = os.getenv("TAVILY_API_KEY")
 
-tavily_client = TavilyClient(api_key=TAVILY_API_KEY)
+    if not api_key:
+        raise ValueError(
+            "TAVILY_API_KEY is not set in .env"
+        )
+
+    return TavilyClient(api_key=api_key)
 
 
 def search_web(query: str) -> dict:
-    response = tavily_client.search(
+    response = get_tavily_client().search(
         query=query,
         search_depth="advanced",
         max_results=5,

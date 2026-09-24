@@ -3,7 +3,7 @@ from app.services.rag import retrieve
 
 question = "According to my AWS notes, what can trigger a Lambda function?"
 
-results = retrieve(question, n_results=1)
+results = retrieve(question, n_results=2)
 
 # for result in results:
 #     print("\n---")

@@ -150,7 +150,7 @@ def _run_tool(name: str, arguments: dict) -> dict:
     )
 
 
-def run_agent(question: str) -> dict:
+def run_agent(question: str, include_debug: bool = False) -> dict:
     """
     Run the tool-calling Dad Mode agent.
     """
@@ -178,6 +178,7 @@ def run_agent(question: str) -> dict:
 
     tool_calls_used = []
     all_sources = []
+    debug_context_parts = []
 
     # Allow a few tool-call rounds.
     for _ in range(4):
@@ -268,24 +269,22 @@ def run_agent(question: str) -> dict:
             # Collect sources for the UI.
             if tool_result["type"] == "knowledge":
 
-                for result in tool_result["results"]:
-
-                    source = result.get(
-                        "source"
-                    )
-
-                    if source:
-                        all_sources.append(
-                            source
+                if include_debug:
+                    for result in tool_result["results"]:
+                        debug_context_parts.append(
+                            f"Source: {result['source']}\n"
+                            f"{result['document']}"
                         )
 
             elif tool_result["type"] == "web":
 
-                for source in tool_result["sources"]:
-
-                    all_sources.append(
-                        source
-                    )
+                if include_debug:
+                    for source in tool_result["sources"]:
+                        debug_context_parts.append(
+                            f"Source: {source['title']}\n"
+                            f"URL: {source['url']}\n"
+                            f"{source['content']}"
+                        )
 
             input_items.append(
                 {
