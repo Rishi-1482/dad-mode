@@ -1,0 +1,58 @@
+name: AI Evaluation
+
+on:
+  pull_request:
+    branches: [main]
+
+  push:
+    branches: [main]
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Build knowledge base
+        env:
+          OPENAPI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python scripts/ingest.py
+
+      - name: Run guardrail tests
+        env:
+          OPENAPI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          pytest tests/test_guardrails.py
+
+      - name: Run DeepEval RAG tests
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAPI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          deepeval test run evals/test_rag.py
+
+      - name: Run DeepEval agent tests
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAPI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          deepeval test run evals/test_agent.py
