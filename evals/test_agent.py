@@ -42,7 +42,7 @@ CASES = [
 ]
 
 
-def fake_tool(name: str, arguments: dict):
+def fake_tool(name: str, arguments: dict, user_question: str):
 
     if name == "search_knowledge":
 
