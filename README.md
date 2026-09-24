@@ -17,6 +17,30 @@ Go ahead. Ask the question you could have Googled yourself.
 - FastAPI backend and Streamlit frontend
 - Input guardrails and API token protection
 
+## Architecture
+
+```text
+                 PUBLIC USER
+                      │
+                      ▼
+            Streamlit Community Cloud
+                      │
+                      │ HTTPS + token
+                      ▼
+             Render FastAPI Backend
+                      │
+            ┌─────────┼─────────┐
+            ▼         ▼         ▼
+         OpenAI    ChromaDB   Tavily
+            │         │         │
+            └─────────┼─────────┘
+                      ▼
+                Agent + Guardrails
+                      │
+                      ▼
+                 Dad Response
+```
+
 ## Local setup
 
 ```bash
