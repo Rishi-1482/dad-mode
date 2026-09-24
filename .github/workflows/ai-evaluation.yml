@@ -1,11 +1,12 @@
 name: AI Evaluation
 
 on:
-  pull_request:
-    branches: [main]
-
   push:
-    branches: [main]
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
 jobs:
   evaluate:
@@ -15,11 +16,10 @@ jobs:
       contents: read
 
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Setup up Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
