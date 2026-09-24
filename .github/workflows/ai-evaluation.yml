@@ -13,6 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      PYTHONPATH: ${{ github.workspace }}
+      DEEPEVAL_PER_ATTEMPT_TIMEOUT_SECONDS_OVERRIDE: "300"
+      DEEPEVAL_PER_TASK_TIMEOUT_SECONDS_OVERRIDE: "900"
+
     permissions:
       contents: read
 
@@ -33,25 +39,17 @@ jobs:
           pip install pytest
 
       - name: Build knowledge base
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           python3 -m scripts.ingest
 
       - name: Run guardrail tests
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           python -m pytest tests/test_guardrails.py
 
       - name: Run DeepEval RAG tests
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          PYTHONPATH="$(pwd)" deepeval test run evals/test_rag.py
+          deepeval test run evals/test_rag.py
 
       - name: Run DeepEval agent tests
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          PYTHONPATH="$(pwd)" deepeval test run evals/test_agent.py
+          deepeval test run evals/test_agent.py
