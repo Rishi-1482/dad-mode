@@ -33,13 +33,13 @@ jobs:
 
       - name: Build knowledge base
         env:
-          OPENAPI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           python3 -m scripts.ingest
 
       - name: Run guardrail tests
         env:
-          OPENAPI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           python -m pytest tests.test_guardrails
 
