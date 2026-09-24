@@ -47,10 +47,10 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          deepeval test run evals/test_rag.py
+          PYTHONPATH="$(pwd)" deepeval test run evals/test_rag.py
 
       - name: Run DeepEval agent tests
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          deepeval test run evals/test_agent.py
+          PYTHONPATH="$(pwd)" deepeval test run evals/test_agent.py
