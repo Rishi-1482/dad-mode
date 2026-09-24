@@ -92,7 +92,11 @@ Keep answers concise and useful.
 """
 
 
-def _run_tool(name: str, arguments: dict) -> dict:
+def _run_tool(
+    name: str,
+    arguments: dict,
+    user_question: str,
+) -> dict:
     """
     Execute one of our application tools.
     """
@@ -100,8 +104,8 @@ def _run_tool(name: str, arguments: dict) -> dict:
     if name == "search_knowledge":
 
         results = retrieve(
-            arguments["query"],
-            n_results=2,
+            user_question,
+            n_results=1,
         )
 
         return {
@@ -239,12 +243,19 @@ def run_agent(question: str, include_debug: bool = False) -> dict:
             else:
                 route = "hybrid"
 
-            return {
+            result = {
                 "response": answer,
                 "route": route,
                 "sources": all_sources,
                 "tool_calls": tool_calls_used,
             }
+
+            if include_debug:
+                result["debug_context"] = "\n\n---\n\n".join(
+                    debug_context_parts
+                )
+
+            return result
 
         # Preserve the model's tool-call items.
         input_items.extend(
@@ -264,22 +275,28 @@ def run_agent(question: str, include_debug: bool = False) -> dict:
             tool_result = _run_tool(
                 name,
                 arguments,
+                user_question=question,
             )
 
-            # Collect sources for the UI.
+            # Collect sources for the UI and context for evaluations.
             if tool_result["type"] == "knowledge":
+                for retrieved_item in tool_result["results"]:
+                    source = retrieved_item.get("source")
 
-                if include_debug:
-                    for result in tool_result["results"]:
+                    if source:
+                        all_sources.append(source)
+
+                    if include_debug:
                         debug_context_parts.append(
-                            f"Source: {result['source']}\n"
-                            f"{result['document']}"
+                            f"Source: {source}\n"
+                            f"{retrieved_item['document']}"
                         )
 
             elif tool_result["type"] == "web":
+                for source in tool_result["sources"]:
+                    all_sources.append(source)
 
-                if include_debug:
-                    for source in tool_result["sources"]:
+                    if include_debug:
                         debug_context_parts.append(
                             f"Source: {source['title']}\n"
                             f"URL: {source['url']}\n"
@@ -296,12 +313,19 @@ def run_agent(question: str, include_debug: bool = False) -> dict:
                 }
             )
 
-    return {
+    result = {
         "response": (
             "Dad got stuck calling too many tools. "
             "Try asking that a little more simply."
         ),
         "route": "error",
-        "sources": [],
+        "sources": all_sources,
         "tool_calls": tool_calls_used,
     }
+
+    if include_debug:
+        result["debug_context"] = "\n\n---\n\n".join(
+            debug_context_parts
+        )
+
+    return result

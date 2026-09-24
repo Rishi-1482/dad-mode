@@ -8,6 +8,7 @@ from app.services.dad import client
 CHROMA_PATH = "./chroma_db"
 COLLECTION_NAME = "dad_mode_knowledge"
 EMBEDDING_MODEL = "text-embedding-3-small"
+MAX_RETRIEVAL_DISTANCE = 1.1
 
 
 # Persistent local Chroma database
@@ -20,24 +21,35 @@ collection = chroma_client.get_or_create_collection(
 
 def chunk_text(
     text: str,
-    chunk_size: int = 220,
-    overlap: int = 30,
+    chunk_size: int = 800,
+    overlap: int = 100,
 ) -> list[str]:
     """
-    Split text into overlapping character chunks.
+    Preserve paragraph boundaries and split only oversized paragraphs.
     """
     chunks = []
 
-    start = 0
+    paragraphs = [
+        paragraph.strip()
+        for paragraph in text.split("\n\n")
+        if paragraph.strip()
+    ]
 
-    while start < len(text):
-        end = start + chunk_size
-        chunk = text[start:end].strip()
+    for paragraph in paragraphs:
+        if len(paragraph) <= chunk_size:
+            chunks.append(paragraph)
+            continue
 
-        if chunk:
-            chunks.append(chunk)
+        start = 0
 
-        start += chunk_size - overlap
+        while start < len(paragraph):
+            end = start + chunk_size
+            chunk = paragraph[start:end].strip()
+
+            if chunk:
+                chunks.append(chunk)
+
+            start += chunk_size - overlap
 
     return chunks
 
@@ -104,6 +116,11 @@ def ingest_document(file_path: str) -> int:
         for index in range(len(chunks))
     ]
 
+    # Remove stale chunks when a document's chunking strategy changes.
+    collection.delete(
+        where={"source": path.name},
+    )
+
     collection.upsert(
         ids=ids,
         embeddings=embeddings,
@@ -144,9 +161,13 @@ def ingest_directory(directory: str = "knowledge") -> int:
 def retrieve(
     query: str,
     n_results: int = 2,
+    max_distance: float = MAX_RETRIEVAL_DISTANCE,
 ) -> list[dict]:
     """
-    Retrieve the most relevant chunks for a query.
+    Retrieve relevant chunks and discard weak vector matches.
+
+    Chroma distances are lower-is-better. The default cutoff was
+    calibrated against the project's evaluation queries.
     """
     query_embedding = create_embeddings([query])[0]
 
@@ -171,6 +192,9 @@ def retrieve(
         metadatas,
         distances,
     ):
+        if distance > max_distance:
+            continue
+
         retrieved.append(
             {
                 "document": document,
