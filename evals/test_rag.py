@@ -15,7 +15,7 @@ from deepeval.test_case import LLMTestCase
 from app.services.assistant import answer_question
 
 
-DATASET_PATH = Path("/Users/rishienugala/Desktop/local-agent-AI-voice-assistant/app/evaluation/dataset.json")
+DATASET_PATH = Path("app/evaluation/dataset.json")
 
 
 def load_rag_cases():
