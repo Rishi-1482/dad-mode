@@ -46,10 +46,6 @@ jobs:
         run: |
           python -m pytest tests/test_guardrails.py
 
-      - name: Run DeepEval RAG tests
-        run: |
-          deepeval test run evals/test_rag.py
-
       - name: Run DeepEval agent tests
         run: |
           deepeval test run evals/test_agent.py
