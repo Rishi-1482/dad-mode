@@ -21,10 +21,23 @@ def init_logs():
                 model TEXT,
                 input_tokens INTEGER,
                 output_tokens INTEGER,
+                estimated_cost REAL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+
             )
             """
         )
+
+        columns = {
+            row[1]
+            for row in conn.execute("PRAGMA table_info(request_logs)")
+        }
+
+        if "estimated_cost" not in columns:
+            conn.execute(
+                "ALTER TABLE request_logs "
+                "ADD COLUMN estimated_cost REAL DEFAULT 0.0"
+            )
 
         conn.commit()
 
@@ -38,6 +51,7 @@ def log_request(
     model: str = "",
     input_tokens: int = 0,
     output_tokens: int = 0,
+    estimated_cost: float = 0.0,
 ):
     init_logs()
 
@@ -52,9 +66,10 @@ def log_request(
                 success,
                 model,
                 input_tokens,
-                output_tokens
+                output_tokens,
+                estimated_cost
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 conversation_id,
@@ -65,10 +80,8 @@ def log_request(
                 model,
                 input_tokens,
                 output_tokens,
+                estimated_cost,
             ),
         )
 
         conn.commit()
-
-
-init_logs()

@@ -11,7 +11,6 @@ from app.services.memory import (
 
 )
 from app.services.memory_extractor import extract_memories
-from app.services.observability import log_request
 import time
 
 
@@ -215,6 +214,9 @@ def run_agent(question: str, conversation_id: str = "default", include_debug: bo
     all_sources = []
     debug_context_parts = []
 
+    total_input_tokens = 0
+    total_output_tokens = 0
+
 
     agent_instructions = (
         SYSTEM_PROMPT
@@ -232,6 +234,9 @@ def run_agent(question: str, conversation_id: str = "default", include_debug: bo
             tools=TOOLS,
             tool_choice="auto",
         )
+        if response.usage:
+            total_input_tokens += response.usage.input_tokens or 0
+            total_output_tokens += response.usage.output_tokens or 0
 
         function_calls = [
             item
@@ -296,31 +301,36 @@ def run_agent(question: str, conversation_id: str = "default", include_debug: bo
                 question,
                 answer,
             )
+            input_cost = (
+                total_input_tokens / 1_000_000
+            ) * 0.15
+
+            output_cost = (
+                total_output_tokens / 1_000_000
+            ) * 0.60
+
+            estimated_cost = (
+                input_cost + output_cost
+            )
 
             result = {
                 "response": answer,
                 "route": route,
                 "sources": all_sources,
                 "tool_calls": tool_calls_used,
+                "input_tokens": total_input_tokens,
+                "output_tokens": total_output_tokens,
+                "total_tokens": (
+                    total_input_tokens + total_output_tokens
+                ),
+                "model": AGENT_MODEL,
+                "estimated_cost": estimated_cost,
             }
 
             if include_debug:
                 result["debug_context"] = "\n\n---\n\n".join(
                     debug_context_parts
                 )
-
-            latency_ms = (
-                time.perf_counter() - start_time
-            ) * 1000
-
-            log_request(
-                conversation_id,
-                route,
-                tool_calls_used,
-                latency_ms,
-                True,
-                AGENT_MODEL,
-            )
 
             return result
 

@@ -31,6 +31,9 @@ def answer_question(
             latency_ms=latency_ms,
             success=result.get("route") != "error",
             model=result.get("model", ""),
+            input_tokens=result.get("input_tokens", 0),
+            output_tokens=result.get("output_tokens", 0),
+            estimated_cost=result.get("estimated_cost", 0.0),
         )
 
         return result
@@ -47,6 +50,7 @@ def answer_question(
             tools=[],
             latency_ms=latency_ms,
             success=False,
+            model="",
         )
 
         raise

@@ -108,6 +108,30 @@ col4.metric(
     df["conversation_id"].nunique(),
 )
 
+total_input = df["input_tokens"].sum()
+total_output = df["output_tokens"].sum()
+total_tokens = total_input + total_output
+
+estimated_cost = (
+    (total_input / 1_000_000) * 0.15
+    + (total_output / 1_000_000) * 0.60
+)
+
+col3.metric(
+    "Total Input Tokens",
+    f"{total_input:,}",
+)
+
+col2.metric(
+    "Total Output Tokens",
+    f"{total_output:,}",
+)
+
+col1.metric(
+    "Total Cost",
+    f"${estimated_cost:.4f}",
+)
+
 
 st.divider()
 
@@ -134,6 +158,8 @@ fig_routes = px.bar(
     y="count",
     title="Requests by Route",
 )
+fig_routes.update_traces(width=0.2)
+fig_routes.update_layout(bargap=0.1)
 
 st.plotly_chart(
     fig_routes,
@@ -195,6 +221,8 @@ if tool_rows:
         y="count",
         title="Tool Usage",
     )
+    fig_tools.update_traces(width=0.2)
+    fig_tools.update_layout(bargap=0.1)
 
     st.plotly_chart(
         fig_tools,
